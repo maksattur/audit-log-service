@@ -5,6 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/maksattur/audit-log-service/internal/config"
+	"github.com/maksattur/audit-log-service/internal/repository/ch"
+	"github.com/maksattur/audit-log-service/internal/services"
+	"github.com/maksattur/audit-log-service/internal/token_manager"
+	"github.com/maksattur/audit-log-service/internal/transport/consumer"
+	"github.com/maksattur/audit-log-service/internal/transport/consumer/kafka_consumer"
 	"github.com/maksattur/audit-log-service/internal/transport/handler"
 	"log"
 	"net/http"
@@ -28,7 +33,29 @@ func run() error {
 		return fmt.Errorf("failed to load config %w", err)
 	}
 
-	httpHandler := handler.NewHttpHandler()
+	eventStoreRepo, err := ch.NewClickHouse(ctx, cfg.ClickHouse)
+	if err != nil {
+		return fmt.Errorf("failed to connect to ClickHouse %w", err)
+	}
+
+	auditService := services.NewEventService(eventStoreRepo)
+
+	tokenManager, err := token_manager.NewTokenManager(cfg.SecretKey, cfg.JwtTTL)
+	if err != nil {
+		return fmt.Errorf("failed to make token manager %w", err)
+	}
+
+	httpHandler := handler.NewHttpHandler(auditService, tokenManager)
+
+	kafkaCfg := kafka_consumer.NewConfig(cfg.KafkaBrokerAddr, cfg.KafkaGroupID, cfg.KafkaTopic)
+
+	kafkaConsumer := kafka_consumer.NewKafkaConsumer(kafkaCfg)
+
+	consumerAdapter := consumer.NewConsumer(auditService, kafkaConsumer)
+	defer consumerAdapter.Close()
+
+	// run receive data
+	go consumerAdapter.Receive(ctx)
 
 	srv := http.Server{
 		Addr:    cfg.HTTPAddr,
