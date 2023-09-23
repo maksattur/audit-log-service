@@ -1,0 +1,10 @@
+version: '3.8'
+name: audit_log_service_infrastructure
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: audit_log_service
+    ports:
+      - "8080:8080"
