@@ -1,0 +1,123 @@
+openapi: 3.0.0
+info:
+  version: "1.0.0"
+  title: "API Documentation"
+  description: "REST requests to audit log service"
+servers:
+  - url: 'http://localhost:8080'
+    description: 'Docker server'
+  - url: 'http://localhost:9090'
+    description: 'Localhost server'
+
+paths:
+  /auth:
+    post:
+      summary: "Authenticate"
+      tags:
+        - auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                login:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: "JWT token successfully generated"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '400':
+          description: "Bad Request - Invalid request data"
+        '401':
+          description: "Unauthorized - Invalid login or password"
+        '500':
+          description: "Internal Server Error - An unexpected error occurred"
+  /events:
+    get:
+      summary: "Get events based on filters"
+      tags:
+        - events
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: query
+          description: "User ID (optional)"
+          schema:
+            type: string
+        - name: event_type
+          in: query
+          description: "Event type (optional)"
+          schema:
+            type: string
+        - name: from
+          in: query
+          description: "Start date-time (required)"
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: "End date-time (required)"
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          description: "Limit is limit requested records (optional)"
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10000
+      responses:
+        '200':
+          description: "List of events"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
+        '400':
+          description: "Bad Request - Invalid request data"
+        '401':
+          description: "Unauthorized - Invalid login or password"
+        '500':
+          description: "Internal Server Error - An unexpected error occurred"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Event:
+      type: object
+      properties:
+        common:
+          $ref: "#/components/schemas/CommonFields"
+        specific:
+          type: object
+    CommonFields:
+      type: object
+      properties:
+        user_id:
+          type: string
+        event_type:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
