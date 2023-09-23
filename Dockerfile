@@ -2,7 +2,7 @@ FROM golang:1.20-alpine
 
 COPY . /go/src/app
 
-WORKDIR /go/src/app/cmd/audit-log
+WORKDIR /go/src/app/cmd/audit_log
 
 RUN go build -o app main.go
 

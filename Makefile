@@ -4,7 +4,7 @@ dc:
 	docker-compose up --remove-orphans --build -d
 
 run:
-	go build -o app cmd/audit-log-service/main.go && ./app
+	go build -o app cmd/audit_log/main.go && ./app
 
 test:
 	go test -race ./...
