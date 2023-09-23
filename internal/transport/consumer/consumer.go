@@ -2,8 +2,8 @@ package consumer
 
 import (
 	"context"
-	"fmt"
 	"github.com/maksattur/audit-log-service/internal/domain"
+	"log"
 )
 
 type ConsumeAdapter interface {
@@ -43,17 +43,17 @@ func (c *Consumer) Receive(ctx context.Context) {
 			}
 			e, err := eventBrokerToDomain(event)
 			if err != nil {
-				fmt.Printf("Error cast: %v\n", err)
+				log.Printf("Error cast: %v\n", err)
 				continue
 			}
 			if err := c.service.SaveData(ctx, e); err != nil {
-				fmt.Printf("Error save to storage: %v\n", err)
+				log.Printf("Error save to storage: %v\n", err)
 			}
 		case err, ok := <-errorChan:
 			if !ok {
-				return
+				continue
 			}
-			fmt.Printf("Error: %v\n", err)
+			log.Printf("Error: %v\n", err)
 		}
 	}
 }

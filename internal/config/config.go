@@ -14,7 +14,7 @@ type Config struct {
 	KafkaGroupID    string        `envconfig:"KAFKA_GROUP_ID" required:"true" default:"my-group"`
 	KafkaTopic      string        `envconfig:"KAFKA_TOPIC" required:"true" default:"event-log"`
 	SecretKey       []byte        `envconfig:"SECRET_KEY" required:"true" default:"jksdiweJask"`
-	JwtTTL          time.Duration `envconfig:"JWT_TTL" default:"48h" required:"true"`
+	JwtTTL          time.Duration `envconfig:"JWT_TTL" default:"100h" required:"true"`
 	Postgres        Postgres
 	ClickHouse      ClickHouse
 }
